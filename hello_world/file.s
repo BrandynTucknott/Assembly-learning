@@ -1,18 +1,21 @@
-.global _start
-.intel_syntax noprefix
+# to run this program (especially after making changes):
+#   as file.s -o file.o
+#   ld file.o -o file
+#   ./file
 
-// use sys-table to do things (look this up)
+.global _start
+
 _start:
-    // sys_write
-    mov rax, 1
-    mov rdi, 1
-    lea rsi, [hello_world]
-    mov rdx, 14
+    # sys_write
+    mov $1, %rax
+    mov $1, %rdi
+    lea [hello_world], %rsi
+    mov $14, %rdx
     syscall
 
-    // sys_exit
-    mov rax, 60
-    mov rdi, 0
+    # sys_exit
+    mov $60, %rax
+    mov $0, %rdi
     syscall
 
 hello_world:
