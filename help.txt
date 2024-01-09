@@ -1,3 +1,5 @@
+AMD64
+
 Registers:
 * rax
 * rbx

@@ -28,10 +28,12 @@ _start:
 start_loop: # start loop
     cmp $0, %eax # check to see if we’ve hit the end
     je loop_exit # je - jump if equal
+
     add $4, %edi # incl - incrememnt the operand by one - load next value
     mov data_items(,%edi,), %eax # get 4 bytes starting at the item index
     cmp %ebx, %eax # cmpl - compare the contents of two registers - compare values
     jle start_loop # jle - jump if less than or equal to - jump to loop beginning if the new one isn’t bigger
+    
     mov %eax, %ebx # move the value as the largest
     jmp start_loop # jump to loop beginning
 
