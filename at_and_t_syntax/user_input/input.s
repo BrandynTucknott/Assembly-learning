@@ -7,7 +7,6 @@
     buffer_size = 255
     get_prompt: .asciz   "  Get user input: "
     write_string: .asciz "Given user input: "
-    test_str: .asciz "test\n"
 
 .section .bss
    buffer: .space buffer_size
