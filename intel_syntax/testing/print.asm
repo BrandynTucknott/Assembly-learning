@@ -1,5 +1,3 @@
-; use 2 bytes for 
-
 section .data
     ;buffer resb 0x06 ; null terminator - NOTE: 5 bytes reserved for num: the largest it can get with 2 bytes is 5 digits in decimal
     buffer_max_index equ 0x04 ;[buffer + buffer_max_index] = last char in buffer
