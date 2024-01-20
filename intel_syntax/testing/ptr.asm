@@ -1,4 +1,4 @@
-
+; conclusion: BYTE PTR is not a keyword in this version of assembly
 section .bss
     num resd 0x01
 section .data
