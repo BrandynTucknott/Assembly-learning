@@ -1,8 +1,10 @@
 section .bss
     buffer resd 0x20
+    num resd 0x01
 
 section .data
     BUFFER_SIZE equ 0x20
+
     prompt db "Enter input (32 chars): ", 0x00
     PROMPT_SIZE equ $ - prompt
 
@@ -48,7 +50,14 @@ _start:
     mov ecx, buffer
     mov edx, BUFFER_SIZE
     int 0x80
+
+    mov dword ecx, num
+    mov dword edx, [buffer]
+    mov dword [ecx], edx
+    sub dword [ecx], 0x30
+
+    mov ebx, [num]
     ; exit
     mov eax, 1
-    xor ebx, ebx
+    ;xor ebx, ebx
     int 0x80
