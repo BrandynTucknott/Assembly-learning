@@ -11,6 +11,8 @@ section .data
     new_line_str db 0x0A
     new_line_str_size equ $ - new_line_str
 
+    test_var dd 0x32
+
 section .text
 nl:
     push eax ; save vals in registers before printing
@@ -60,4 +62,6 @@ _start:
     ; exit
     mov eax, 1
     ;xor ebx, ebx
+    mov dword [test_var], 0x54
+    mov ebx, [test_var]
     int 0x80
