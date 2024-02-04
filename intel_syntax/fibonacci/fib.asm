@@ -1,3 +1,5 @@
+%include "../library32.asm"
+
 ; prints out numbers in the fibonacci sequence (first array_size)
 section .data
     array_size equ 0x06
@@ -109,7 +111,6 @@ _start:
     exit:
         ; print new line
         mnl
-
         ; exit
         mov eax, 0x01
         mov ebx, 0x000
