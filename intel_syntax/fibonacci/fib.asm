@@ -1,5 +1,4 @@
 ; prints out numbers in the fibonacci sequence (first array_size)
-
 section .data
     array_size equ 0x06
     bytes_per_element equ 0x02
@@ -16,6 +15,27 @@ section .bss
     array: resw array_size; reserve 2 byte per num in fibonacci sequence
 
 section .text
+; MACRO: print new line
+%macro mnl 0
+    pushad
+    mov eax, 0x04
+    mov ebx, 0x01
+    mov ecx, new_line
+    mov edx, new_line_len
+    int 0x80
+    popad
+%endmacro
+
+; MACRO: print space
+%macro mspace 0
+    pushad
+    mov eax, 0x04
+    mov ebx, 0x01
+    mov ecx, space
+    mov edx, space_len
+    int 0x80
+    popad
+%endmacro
 
 global _start
 
@@ -32,10 +52,7 @@ _start:
     mov edx, arr_val_len
     int 0x80
 
-    mov eax, 0x04 ; print " "
-    mov ecx, space
-    mov edx, space_len
-    int 0x80
+    mspace
 
     ; print array[1] = 1
     mov eax, 0x04
@@ -44,10 +61,7 @@ _start:
     mov edx, arr_val_len
     int 0x80
 
-    mov eax, 0x04 ; print " "
-    mov ecx, space
-    mov edx, space_len
-    int 0x80
+    mspace
 
     ; edi: array index
     ; esi: current fib num 
@@ -77,11 +91,7 @@ _start:
         int 0x80
 
         ; print space
-        mov eax, 0x04
-        mov ebx, 0x01
-        mov ecx, space
-        mov ebx, space_len
-        int 0x80
+        mspace
 
         ; END OF SUBLOOP
         ; ==================================================================================
@@ -98,11 +108,7 @@ _start:
     ; exit the program -DONE
     exit:
         ; print new line
-        mov eax, 0x04
-        mov ebx, 0x01
-        mov ecx, new_line
-        mov edx, new_line_len
-        int 0x80
+        mnl
 
         ; exit
         mov eax, 0x01
