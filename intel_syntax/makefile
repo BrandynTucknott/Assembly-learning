@@ -1,10 +1,10 @@
-library: library32.asm
-	nasm library32.asm -g -f elf
-	ld library32.o -g -m elf_i386 -o lib
+# lib32: library32.asm
+# 	nasm library32.asm -g -f elf
+# 	ld library32.o -g -m elf_i386 -o lib32
 
-testlib: testLib32.asm
+tlib32: testLib32.asm library32.asm
 	nasm testLib32.asm -g -f elf
-	ld testLib32.asm -g -m elf_i386 -o tlib
+	ld testLib32.o -g -m elf_i386 -o tlib32
 
 clean:
-	rm *.o lib tlib
+	rm *.o tlib32

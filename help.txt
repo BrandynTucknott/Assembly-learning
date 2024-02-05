@@ -1,9 +1,0 @@
-AMD64
-
-Registers:
-* rax
-* rbx
-* rcx
-* rdx
-* rdi
-* rsi
