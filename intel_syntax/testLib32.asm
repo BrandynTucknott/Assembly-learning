@@ -21,4 +21,9 @@ _start:
     mov eax, 60457
     call WriteUInt
     NL
+    mov eax, 1023456789
+    call WriteUInt
+    NL
+    WRITE_BUFFER testWriteBufferCase1
+    WRITE_BUFFER testWriteBufferCase2
     EXIT 0

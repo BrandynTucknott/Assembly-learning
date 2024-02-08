@@ -10,6 +10,8 @@
 ;   SPACE
 ;   ZERO_BUFFER - buffer, buffer length
 ;   WRITE_BUFFER - buffer
+;   WRITE_BUFFERL - buffer, buffer length
+;   WRITE_UINT - unsigned int
 ; All functions for use:
 ;   ZeroBuffer
 ;   WriteBuffer
@@ -74,6 +76,25 @@ section .text
     mov esi, %1 ; ecx = buffer
     call WriteBuffer
     pop esi
+%endmacro
+
+; prints all (buffer length) values in the buffer to the console
+%macro WRITE_BUFFERL 2 ; buffer, buffer length
+    pushad
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, %1
+    mov edx, %2
+    int 0x80
+    popad
+%endmacro
+
+; prints unsigned integer
+%macro WRITE_UINT 1 ; unsigned int
+    push eax
+    mov eax, %1
+    call WriteUInt
+    pop eax
 %endmacro
 ; =======================================================================================================================
 ; =======================================================================================================================
@@ -150,6 +171,7 @@ WriteUInt:
     ; check if N is 0
     cmp eax, 0
     je writeUInt_0
+    add DWORD ebx, 10
     jmp writeUInt_N
 
     
@@ -157,11 +179,10 @@ WriteUInt:
         mov BYTE [ebx], 48 ; 48 = zero in ascii
         jmp print_string_buffer_writeUInt
 
-    add DWORD ebx, 10
+    
     writeUInt_N:
         cmp eax, 0
         je print_string_buffer_writeUInt
-        ; je create_valid_buffer_writeUInt
 
         ; update indicies
         sub ebx, 1

@@ -1,20 +1,14 @@
 %include "../library32.asm"
 
+; can only print the first 46 fibonacci numbers before it breaks (due to 32 bit registers and data storage)
+
 ; prints out numbers in the fibonacci sequence (first array_size)
 section .data
-    array_size equ 0x06
-    bytes_per_element equ 0x02
-    arr_val: db 31h, 0x00
-    arr_val_len equ $ - arr_val
-
-    space: db " ", 0x00
-    space_len equ $ - space
-
-    new_line: db "", 0x0A, 0x00
-    new_line_len equ $ - new_line
+    array_size equ 46 ; doubles as N for printing the first N fibonacci numbers
+    bytes_per_element equ 0x04
 
 section .bss
-    array: resw array_size; reserve 2 byte per num in fibonacci sequence
+    array resd array_size
 
 section .text
 
@@ -23,74 +17,62 @@ global _start
 _start:
     ; create an array to store nums -DONE
     ; set first element in array equal to 1
-    mov dword [array], 0x01
-    mov dword [array + bytes_per_element], 0x01
+    mov DWORD [array], 1
+    mov DWORD [array + bytes_per_element], 1
 
-    ; setup print - print array[0] = 1
-    mov eax, 0x04
-    mov ebx, 0x01
-    mov ecx, arr_val
-    mov edx, arr_val_len
-    int 0x80
-
+    WRITE_UINT [array] ; setup print - print array[0] = 1
     SPACE
-
-    ; print array[1] = 1
-    mov eax, 0x04
-    mov ebx, 0x01
-    mov ecx, arr_val
-    mov edx, arr_val_len
-    int 0x80
-
-    SPACE
+    WRITE_UINT [array + bytes_per_element] ; print array[1] = 1
 
     ; edi: array index
     ; esi: current fib num 
-    mov edi, 0x02
+    mov edi, 2
     ; loop to calculate and print all nums in series up until Nth num
     loop:
         ; calculate next fibonacci num
-        mov esi, [array + (edi - 1) * bytes_per_element] ; array + edi * BPE - 1 * BPE
-        add esi, [array + (edi - 2) * bytes_per_element] ; array + edi * BPE - 2 * BPE
+        ; mov esi, [array + (edi - 1) * bytes_per_element] ; array + edi * BPE - 1 * BPE
+        mov esi, array
+        mov eax, bytes_per_element
+        mov ebx, edi
+        sub DWORD ebx, 1
+        CDQ
+        mul ebx ; eax = eax * ebx = (edi - 1) * bytes_per_element
+        add DWORD esi, eax
+        mov DWORD ecx, [esi] ; ecx = array[i - 1]
+
+        ; add esi, [array + (edi - 2) * bytes_per_element] ; array + edi * BPE - 2 * BPE
+        mov esi, array
+        mov eax, bytes_per_element
+        mov ebx, edi
+        sub DWORD ebx, 2
+        CDQ
+        mul ebx ; eax = eax * ebx = (edi - 2) * bytes_per_element
+        add DWORD esi, eax
+        add DWORD ecx, [esi] ; ecx = array[i - 1] += array[i - 2]
+
         ; now edi holds the value for the next fib num
-        mov [array + edi], esi ; new fib num now stored in array at index edi
-        
-        ; ==================================================================================
-        ; START SUBLOOP: hex -> print one byte at a time
-        ; convert each digit to hex and store in arr_val - TODO
-        convert_loop:
-            xor edx, edx ; clear remainder register
-            ; some method of moving [array + edi] one decimal digit at a time into [arr_val]
-            mov byte [arr_val], 0x0A ; [array + edi]
-            add byte [arr_val], 0x30 ; convert hex digit to ascii num
+        ; mov eax, array
+        ; add eax, edi
+        ; mov [eax], ecx ; new fib num now stored in array at index edi
+        mov eax, edi
+        mov ebx, bytes_per_element
+        CDQ
+        mul ebx ; eax = edi * bytes_per_element
+        mov ebx, array
+        add DWORD ebx, eax
+        mov DWORD [ebx], ecx ; ebx = array + eax --> [ebx] = array[i]
 
-        ; print converted digit
-        mov eax, 0x04
-        mov ebx, 0x01 ; could possibly be removed
-        mov ecx, arr_val
-        mov edx, arr_val_len
-        int 0x80
-
-        ; print space
         SPACE
+        WRITE_UINT ecx
 
-        ; END OF SUBLOOP
-        ; ==================================================================================
-
-        add edi, 0x01 ; update index: doubles as number of fib nums printed
+        inc edi ; update index: doubles as number of fib nums printed
 
         ; check for loop exit
         cmp edi, array_size
         je exit
-
-        ; else: loop again
         jmp loop
 
     ; exit the program -DONE
     exit:
-        ; print new line
         NL
-        ; exit
-        mov eax, 0x01
-        mov ebx, 0x000
-        int 0x80
+        EXIT 0
