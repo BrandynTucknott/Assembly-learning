@@ -1,6 +1,7 @@
-fib: fib.asm ../library32.asm
-	nasm -g -f elf fib.asm
-	ld -g fib.o -m elf_i386 -o fib
+fib: fib.asm ../library64.asm
+	nasm -g -f elf64 fib.asm
+	ld -g fib.o -o fib
+	./fib
 
 clean:
 	rm *.o fib

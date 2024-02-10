@@ -1,4 +1,4 @@
-%include "library32.asm"
+%include "library64.asm"
 
 section .data
     testWriteBufferCase1 db "Does this show up?", 10, 0
@@ -12,16 +12,19 @@ _start:
     WRITE_BUFFER testWriteBufferCase2
 
     ; test WriteUInt function
-    mov eax, 0
+    mov rax, 0
     call WriteUInt
     NL
-    mov eax, 213
+    mov rax, 213
     call WriteUInt
     NL
-    mov eax, 60457
+    mov rax, 60457
     call WriteUInt
     NL
-    mov eax, 1023456789
+    mov rax, 1023456789
+    call WriteUInt
+    NL
+    mov rax, 10234567891023456789
     call WriteUInt
     NL
     WRITE_BUFFER testWriteBufferCase1

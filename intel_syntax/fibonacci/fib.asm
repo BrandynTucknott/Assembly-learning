@@ -1,78 +1,88 @@
-%include "../library32.asm"
+%include "../library64.asm"
 
-; can only print the first 46 fibonacci numbers before it breaks (due to 32 bit registers and data storage)
+; can only print the first 93 fibonacci numbers before integer overflow
 
 ; prints out numbers in the fibonacci sequence (first array_size)
 section .data
-    array_size equ 46 ; doubles as N for printing the first N fibonacci numbers
-    bytes_per_element equ 0x04
+    array_size equ 93 ; doubles as N for printing the first N fibonacci numbers
+    bytes_per_element equ 8
+    fib_label db "Fib Num ", 0
+    colon db ": ", 0
 
 section .bss
-    array resd array_size
+    array resq array_size
 
 section .text
 
 global _start
 
 _start:
-    ; create an array to store nums -DONE
+    ; create an array to store nums
     ; set first element in array equal to 1
-    mov DWORD [array], 1
-    mov DWORD [array + bytes_per_element], 1
+    mov QWORD [array], 1
+    mov QWORD [array + bytes_per_element], 1
 
-    WRITE_UINT [array] ; setup print - print array[0] = 1
-    SPACE
-    WRITE_UINT [array + bytes_per_element] ; print array[1] = 1
+    ; setup print - print array[0] = 1
+    WRITE_BUFFER fib_label
+    WRITE_UINT 0
+    WRITE_BUFFER colon
+    WRITE_UINT [array]
+    NL
 
-    ; edi: array index
-    ; esi: current fib num 
-    mov edi, 2
+    ; print array[1] = 1
+    WRITE_BUFFER fib_label
+    WRITE_UINT 1
+    WRITE_BUFFER colon
+    WRITE_UINT [array + bytes_per_element]
+    NL
+
+    ; rdi: array index
+    ; rsi: current fib num 
+    mov rdi, 2
     ; loop to calculate and print all nums in series up until Nth num
     loop:
         ; calculate next fibonacci num
-        ; mov esi, [array + (edi - 1) * bytes_per_element] ; array + edi * BPE - 1 * BPE
-        mov esi, array
-        mov eax, bytes_per_element
-        mov ebx, edi
-        sub DWORD ebx, 1
-        CDQ
-        mul ebx ; eax = eax * ebx = (edi - 1) * bytes_per_element
-        add DWORD esi, eax
-        mov DWORD ecx, [esi] ; ecx = array[i - 1]
+        ; mov rsi, [array + (rdi - 1) * bytes_per_element] ; array + rdi * BPE - 1 * BPE
+        mov rsi, array
+        mov rax, bytes_per_element
+        mov rbx, rdi
+        sub rbx, 1
+        mul rbx ; rax = rax * rbx = (rdi - 1) * bytes_per_element
+        add rsi, rax
+        mov QWORD rcx, [rsi] ; rcx = array[i - 1]
 
-        ; add esi, [array + (edi - 2) * bytes_per_element] ; array + edi * BPE - 2 * BPE
-        mov esi, array
-        mov eax, bytes_per_element
-        mov ebx, edi
-        sub DWORD ebx, 2
-        CDQ
-        mul ebx ; eax = eax * ebx = (edi - 2) * bytes_per_element
-        add DWORD esi, eax
-        add DWORD ecx, [esi] ; ecx = array[i - 1] += array[i - 2]
+        ; add rsi, [array + (rdi - 2) * bytes_per_element] ; array + rdi * BPE - 2 * BPE
+        mov rsi, array
+        mov rax, bytes_per_element
+        mov rbx, rdi
+        sub QWORD rbx, 2
+        mul rbx ; rax = rax * rbx = (rdi - 2) * bytes_per_element
+        add QWORD rsi, rax
+        add QWORD rcx, [rsi] ; rcx = array[i - 1] += array[i - 2]
 
-        ; now edi holds the value for the next fib num
-        ; mov eax, array
-        ; add eax, edi
-        ; mov [eax], ecx ; new fib num now stored in array at index edi
-        mov eax, edi
-        mov ebx, bytes_per_element
-        CDQ
-        mul ebx ; eax = edi * bytes_per_element
-        mov ebx, array
-        add DWORD ebx, eax
-        mov DWORD [ebx], ecx ; ebx = array + eax --> [ebx] = array[i]
+        ; now rdi holds the value for the next fib num
+        mov rax, rdi
+        mov rbx, bytes_per_element
+        mov rdx, 0
+        mul rbx ; rax = rdi * bytes_per_element
+        mov rbx, array
+        add QWORD rbx, rax
+        mov QWORD [rbx], rcx ; rbx = array + rax --> [rbx] = array[i]
 
-        SPACE
-        WRITE_UINT ecx
+        WRITE_BUFFER fib_label
+        WRITE_UINT rdi
+        WRITE_BUFFER colon
+        WRITE_UINT rcx
+        NL
 
-        inc edi ; update index: doubles as number of fib nums printed
+        inc QWORD rdi ; update index: doubles as number of fib nums printed
 
         ; check for loop exit
-        cmp edi, array_size
+        cmp rdi, array_size
         je exit
         jmp loop
 
-    ; exit the program -DONE
+    ; exit the program
     exit:
         NL
         EXIT 0
