@@ -1,7 +1,11 @@
-multhread: multhread.asm
-	nasm multhread.asm -g -f elf
-	ld multhread.o -g -m elf_i386 -o mt
+mt: multhread.asm
+	nasm multhread.asm -g -f elf64
+	ld multhread.o -g -o mt
 	./mt
 
+cmt: multhread.cpp
+	g++ -g multhread.cpp -o cmt
+	./cmt
+
 clean:
-	rm *.o multhread
+	rm *.o mt cmt
