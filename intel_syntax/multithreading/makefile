@@ -3,8 +3,8 @@ mt: multhread.asm
 	ld multhread.o -g -o mt
 	./mt
 
-cmt: multhread.cpp
-	g++ -g multhread.cpp -o cmt
+cmt: multhread.c
+	g++ -g multhread.c -o cmt
 	./cmt
 
 clean:
