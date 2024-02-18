@@ -10,6 +10,7 @@ section .data
 
 section .bss
     thread1_stack resb thread_stack_size
+    stack_ptr resd 1
 
 section .text
 
@@ -19,35 +20,37 @@ _start:
     mov rax, 9 ; mmap syscall num
     mov rdi, 0 ; address (Kernel should choose location)
     mov rsi, thread_stack_size; child stack size (bytes)
-    mov rdx, 7 ; BITWISE OR(PROT_READ [4] | PROT_WRITE [2] | MAP_ANONYMOUS [1])
-    mov r10, -1 ; fd (ignored)
-    ; mov r8, 0 ; offset (ignored)
+    mov rdx, 3 ; protection flags (e.g., PROT_READ[0x01] | PROT_WRITE[0x02])
+    mov r10, 0x22 ; flags (e.g., MAP_ANONYMOUS[0x20] | MAP_PRIVATE[0x02])
+    mov r8, -1 ; file descriptor (ignored for anonymous mappings)
+    mov r9, 0 ; offset (ignored for anonymoys mapping)
     syscall
+
+    ; address of freed memory returned in rax
+    mov [stack_ptr], rax
+
+    ; move ptr to start of stack
+    mov rax, thread_stack_size - 1
+    add [stack_ptr], rax
 
     ; create separate thread
     mov rax, 56         ; clone syscall number
     mov rdi, child_fn   ; pointer to child function
-    ; mov rsi      ; child stack pointer
+    mov rsi, [stack_ptr]      ; child stack pointer
     mov rdx, 0x11       ; CLONE_VM | CLONE_FS | CLONE_FILES
     mov r10, 0          ; argument for child function
     syscall
 
     ; Parent process continues here
-    mov rcx, 5
-    parent_loop:
-        WRITE_BUFFER hello0
-        NL
-        loop parent_loop
+    WRITE_BUFFER hello0
+    NL
 
     EXIT 0 ; Exit the program
     ; =============== END OF PARENT PROCESS ===========
 
 child_fn: ; Child process continues here
-    mov rcx, 5
-    child_loop:
-        WRITE_BUFFER hello1
-        NL
-        loop child_loop
+    WRITE_BUFFER hello1
+    NL
 
     EXIT 0 ; Exit the child process
     ; =============== END OF CHILD PROCESS ============
