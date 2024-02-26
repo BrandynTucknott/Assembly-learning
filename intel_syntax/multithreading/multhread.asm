@@ -5,6 +5,8 @@
 section .data
     hello0 db "Hello from thread 0", 0
     hello1 db "Hello from thread 1", 0
+
+    t_error db "Something is not right", 0
     
     thread_stack_size equ 4096
 
@@ -30,19 +32,36 @@ _start:
     add rax, thread_stack_size - 1
 
     ; create separate thread
-    mov rax, 56         ; clone syscall number
-    mov rdi, child_fn   ; pointer to child function
-    mov rsi, rax      ; child stack pointer
-    mov rdx, 0xf00       ; CLONE_VM[0x100] | CLONE_THREAD[0x800] | CLONE_FS[0x200] | CLONE_FILES[0x400]
-    mov r10, 0          ; argument for child function
+    ; rax  -  syscall num ( clone )
+    ; rdi  -  unsigned long clone flags
+    ; rsi  -  unsigned long newsp
+    ; rdx  -  void *parent TID
+    ; r10  -  void *child TID
+    ; r8   -  unsigned int TID (thread ptr?)
+    mov rax, 56
+    mov rdi, 0xb00 ; CLONE_VM[0x100] | CLONE_THREAD[0x800] | CLONE_FS[0x200] | //CLONE_FILES[0x400]//
+    mov rsi, rax
+    mov rdx, 0
+    mov r10, 1
+    mov r8, child_fn
     syscall
+
+    test rax, rax
+    jl thread_error
 
     ; Parent process continues here
     WRITE_BUFFER hello0
     NL
 
     EXIT 0
-    ; EXIT 0 ; Exit the program
+    ; =============== END OF PARENT PROCESS ===========
+
+    thread_error:
+        WRITE_BUFFER t_error
+        NL
+
+        EXIT 1
+
 
     child_fn: ; Child process continues here
         WRITE_BUFFER hello1
@@ -50,4 +69,3 @@ _start:
 
         EXIT 0 ; Exit the child process
     ; =============== END OF CHILD PROCESS ============
-    ; =============== END OF PARENT PROCESS ===========
