@@ -3,12 +3,20 @@
 %include "../library64.asm"
 
 section .data
-    hello0 db "Hello from thread 0", 0
-    hello1 db "Hello from thread 1", 0
-
+    hello db "Hello from thread ", 0
     t_error db "Something is not right", 0
     
     thread_stack_size equ 4096
+    _lock dq 0                    ; qword to match with register size
+
+    timespec dq 2, 2000000000
+
+    thread0_counter dq 0
+    thread1_counter dq 0
+
+    barrier_thread_count dq 0
+
+    PRINT_LIMIT equ 10
 
 section .bss
     thread1_stack resb thread_stack_size
@@ -18,54 +26,117 @@ section .text
 
 global _start
 _start:
-    ; create child stack space
-    mov rax, 9 ; mmap syscall num
-    mov rdi, 0 ; address (Kernel should choose location)
-    mov rsi, thread_stack_size; child stack size (bytes)
-    mov rdx, 3 ; protection flags (e.g., PROT_READ[0x01] | PROT_WRITE[0x02])
-    mov r10, 0x20022 ; flags (e.g., MAP_STACK[0x20000] | MAP_ANONYMOUS[0x20] | MAP_PRIVATE[0x02])
-    mov r8, -1 ; file descriptor (ignored for anonymous mappings)
-    mov r9, 0 ; offset (ignored for anonymoys mapping)
+
+    ; testing sleep
+
+    mov rax, 5
+    WRITE_UINT rax
+    NL
+
+
+    mov rdx, timespec
+    add rdx, 8
+
+    mov rax, 35
+    mov rdi, timespec
+    mov rsi, rdx
     syscall
 
-    ; address of freed memory returned in rax
-    add rax, thread_stack_size - 1
-
-    ; create separate thread
-    ; rax  -  syscall num ( clone )
-    ; rdi  -  unsigned long clone flags
-    ; rsi  -  unsigned long newsp
-    ; rdx  -  void *parent TID
-    ; r10  -  void *child TID
-    ; r8   -  unsigned int TID (thread ptr?)
-    mov rax, 56
-    mov rdi, 0xb00 ; CLONE_VM[0x100] | CLONE_THREAD[0x800] | CLONE_FS[0x200] | //CLONE_FILES[0x400]//
-    mov rsi, rax
-    mov rdx, 0
-    mov r10, 1
-    mov r8, child_fn
-    syscall
-
-    test rax, rax
-    jl thread_error
-
-    ; Parent process continues here
-    WRITE_BUFFER hello0
+    mov rax, 10
+    WRITE_UINT rax
     NL
 
     EXIT 0
-    ; =============== END OF PARENT PROCESS ===========
+
+
+
+    mov rax, stack_ptr      ; init second thread stack ptr
+    mov qword [rax], thread1_stack
+    add qword [rax], thread_stack_size - 1
+    
+    mov rax, 56     ; clone syscall
+    mov rdi, 0
+    mov rsi, stack_ptr
+    mov rdx, 0
+    mov r10, 0
+    mov r8, 0
+    syscall
+
+    test rax, rax       ; check for thread creation errors
+    jl thread_error
+
+    ; WRITE_UINT rax
+    ; NL
+
+    ; EXIT 0
+
+    ; push rax            ; preserve TID
+
+    ; barrier, all threads have reaches this point
+    _await_threads:
+        WRITE_UINT rax
+        NL
+        inc qword [barrier_thread_count]
+
+        _wait:
+            cmp qword [barrier_thread_count], 2
+            je _try_lock        ; else wait then check again
+
+            push rax
+            mov rax, 35
+            mov rdi, timespec
+            mov rsi, 0
+            syscall
+            pop rax
+            jmp _wait
+
+    ; mutex lock area (atomic)
+    ; if lock is available
+    ; enter lock and do process
+    ; if not, sleep and try again
+    _try_lock:
+        push rax
+        push rax
+        mov rbx, _lock
+        mov rcx, 0
+        lock cmpxchg qword [rbx], rcx
+        je _mutex_lock
+
+        ; else, sleep
+        mov rax, 35                 ; sleep for 100ms
+        mov rdi, timespec
+        mov rsi, 0
+        syscall
+        pop rax             ; retrieve TID
+        jmp _try_lock               ; try again
+
+
+    _mutex_lock:
+        mov qword [_lock], 1    ; close lock
+        WRITE_BUFFER hello    ; execute process
+        pop rax             ; retrieve TID
+        WRITE_UINT rax
+        NL
+
+        cmp rax, 0
+        jne child_thread_iterate
+
+        inc qword [thread0_counter]
+        mov qword [_lock], 0                ; free up lock
+        cmp qword [thread0_counter], PRINT_LIMIT
+        jl _try_lock
+        jmp _exit
+
+        child_thread_iterate:
+            inc qword [thread1_counter]
+            mov qword [_lock], 0                ; free up lock
+            cmp qword [thread0_counter], PRINT_LIMIT
+            jl _try_lock
+    _exit:
+        EXIT 0
 
     thread_error:
         WRITE_BUFFER t_error
         NL
 
         EXIT 1
-
-
-    child_fn: ; Child process continues here
-        WRITE_BUFFER hello1
-        NL
-
-        EXIT 0 ; Exit the child process
-    ; =============== END OF CHILD PROCESS ============

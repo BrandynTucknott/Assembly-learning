@@ -4,4 +4,4 @@ mt: multhread.asm
 	./mt
 
 clean:
-	rm *.o mt cmt
+	rm *.o mt

@@ -31,7 +31,7 @@ section .text
 ; MACRO DEFINITIONS
 ; =======================================================================================================================
 ; =======================================================================================================================
-; pushes in this order: rax, rbx, rcx, rdx
+; pushes in this order: rax, rbx, rcx, rdx, rsi, rdi, r8 - r15
 %macro PUSHAD64 0
     push rax
     push rbx
@@ -39,10 +39,26 @@ section .text
     push rdx
     push rsi
     push rdi
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15
 %endmacro
 
 ; pops in this order: rdx, rcx, rbx, rax
 %macro POPAD64 0
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r11
+    pop r10
+    pop r9
+    pop r8
     pop rdi
     pop rsi
     pop rdx
@@ -60,24 +76,36 @@ section .text
 
 ; print the new line char to the console
 %macro NL 0
-    PUSHAD64
+    push rax
+    push rdi
+    push rsi
+    push rdx
     mov rax, 1
     mov rdi, 1
     mov rsi, new_line_str
     mov rdx, 1
     syscall
-    POPAD64
+    pop rdx
+    pop rsi
+    pop rdi
+    pop rax
 %endmacro
 
 ; print the space char ' ' to the console
 %macro SPACE 0
-    PUSHAD64
+    push rax
+    push rdi
+    push rsi
+    push rdx
     mov rax, 1
     mov rdi, 1
     mov rsi, space_str
     mov rdx, 1
     syscall
-    POPAD64
+    pop rdx
+    pop rsi
+    pop rdi
+    pop rax
 %endmacro
 
 ; zeros out the given buffer
@@ -100,13 +128,19 @@ section .text
 
 ; prints all (buffer length) values in the buffer to the console
 %macro WRITE_BUFFERL 2 ; buffer, buffer length
-    PUSHAD64
+    push rax
+    push rdi
+    push rsi
+    push rdx
     mov rax, 1
     mov rdi, 1
     mov rsi, %1
     mov rdx, %2
     syscall
-    POPAD64
+    pop rdx
+    pop rsi
+    pop rdi
+    pop rax
 %endmacro
 
 ; prints unsigned integer
