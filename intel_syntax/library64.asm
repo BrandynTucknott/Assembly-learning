@@ -8,7 +8,7 @@
 ;   PUSHAD64
 ;   POPAD64
 ;   EXIT - exit code (0 - 255)
-;   NL
+;   NL, NewL
 ;   SPACE
 ;   ZERO_BUFFER - buffer, buffer length
 ;   WRITE_BUFFER - buffer
@@ -91,6 +91,22 @@ section .text
     pop rax
 %endmacro
 
+%macro NewL 0
+    push rax
+    push rdi
+    push rsi
+    push rdx
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, new_line_str
+    mov rdx, 1
+    syscall
+    pop rdx
+    pop rsi
+    pop rdi
+    pop rax
+%endmacro
+
 ; print the space char ' ' to the console
 %macro SPACE 0
     push rax
@@ -110,12 +126,14 @@ section .text
 
 ; zeros out the given buffer
 %macro ZERO_BUFFER 2 ; buffer, buffer length
-    PUSHAD64
+    push rsi
+    push rdi
     mov rsi, %1 ; eax = buffer
     mov rdi, %2 ; ebx = buffer length
 
     call ZeroBuffer
-    POPAD64
+    pop rdi
+    pop rsi
 %endmacro
 
 ; prints all values in the buffer to the console (until it hits the null char)

@@ -3,18 +3,23 @@
 %include "../library64.asm"
 
 section .data
+    timespec:
+        .tv_sec dq 1
+        .tv_nsec dq 0
+    
     hello db "Hello from thread ", 0
     t_error db "Something is not right", 0
+    barrier_wait db "Had to wait at barrier", 0
+    rsi_val db "rsi: ", 0
     
     thread_stack_size equ 4096
     _lock dq 0                    ; qword to match with register size
 
-    timespec dq 2, 2000000000
-
     thread0_counter dq 0
     thread1_counter dq 0
 
-    barrier_thread_count dq 0
+    thread0_barrier dq 0
+    thread1_barrier dq 0
 
     PRINT_LIMIT equ 10
 
@@ -26,30 +31,6 @@ section .text
 
 global _start
 _start:
-
-    ; testing sleep
-
-    mov rax, 5
-    WRITE_UINT rax
-    NL
-
-
-    mov rdx, timespec
-    add rdx, 8
-
-    mov rax, 35
-    mov rdi, timespec
-    mov rsi, rdx
-    syscall
-
-    mov rax, 10
-    WRITE_UINT rax
-    NL
-
-    EXIT 0
-
-
-
     mov rax, stack_ptr      ; init second thread stack ptr
     mov qword [rax], thread1_stack
     add qword [rax], thread_stack_size - 1
@@ -65,27 +46,38 @@ _start:
     test rax, rax       ; check for thread creation errors
     jl thread_error
 
-    ; WRITE_UINT rax
-    ; NL
-
-    ; EXIT 0
-
-    ; push rax            ; preserve TID
-
     ; barrier, all threads have reaches this point
+    ; (not necessary, but I want to say that I made a barrier)
     _await_threads:
-        WRITE_UINT rax
-        NL
-        inc qword [barrier_thread_count]
+        mov rbx, 0
+        cmp rax, 0
+        jnz _iterate_child_thread
+
+        inc qword [thread0_barrier]
+        jmp _wait
+
+        _iterate_child_thread:
+            inc qword [thread1_barrier]
 
         _wait:
-            cmp qword [barrier_thread_count], 2
-            je _try_lock        ; else wait then check again
+            mov rsi, [thread0_barrier]
+            add rsi, [thread1_barrier]
+            cmp rsi, 2        ; are both threads waiting at the barrier?
+            je _try_lock        ; yes, both threads are here
+            ; else wait then check again
 
+
+            WRITE_UINT rax
+            SPACE
+            WRITE_UINT [thread0_barrier]
+            SPACE
+            WRITE_UINT [thread1_barrier]
+            SPACE
+            WRITE_BUFFER barrier_wait
+            NewL
             push rax
             mov rax, 35
             mov rdi, timespec
-            mov rsi, 0
             syscall
             pop rax
             jmp _wait
@@ -105,7 +97,6 @@ _start:
         ; else, sleep
         mov rax, 35                 ; sleep for 100ms
         mov rdi, timespec
-        mov rsi, 0
         syscall
         pop rax             ; retrieve TID
         jmp _try_lock               ; try again
@@ -116,7 +107,7 @@ _start:
         WRITE_BUFFER hello    ; execute process
         pop rax             ; retrieve TID
         WRITE_UINT rax
-        NL
+        NewL
 
         cmp rax, 0
         jne child_thread_iterate
