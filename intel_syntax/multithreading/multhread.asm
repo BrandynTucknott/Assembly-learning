@@ -10,18 +10,17 @@ section .data
     hello db "Hello from thread ", 0
     t_error db "Something is not right", 0
     barrier_wait db "Had to wait at barrier", 0
-    rsi_val db "rsi: ", 0
     
     thread_stack_size equ 4096
     _lock dq 0                    ; qword to match with register size
 
-    thread0_counter dq 0
+    thread0_counter dq 0        ; for mutex lock
     thread1_counter dq 0
 
-    thread0_barrier dq 0
+    thread0_barrier dq 0        ; for barrier count
     thread1_barrier dq 0
 
-    PRINT_LIMIT equ 10
+    PRINT_LIMIT equ 5      ; num times thread message is printed
 
 section .bss
     thread1_stack resb thread_stack_size
@@ -49,14 +48,13 @@ _start:
     ; barrier, all threads have reaches this point
     ; (not necessary, but I want to say that I made a barrier)
     _await_threads:
-        mov rbx, 0
         cmp rax, 0
-        jnz _iterate_child_thread
+        jnz _inc_child_thread
 
         inc qword [thread0_barrier]
         jmp _wait
 
-        _iterate_child_thread:
+        _inc_child_thread:
             inc qword [thread1_barrier]
 
         _wait:
@@ -66,7 +64,6 @@ _start:
             je _try_lock        ; yes, both threads are here
             ; else wait then check again
 
-
             WRITE_UINT rax
             SPACE
             WRITE_UINT [thread0_barrier]
@@ -75,6 +72,7 @@ _start:
             SPACE
             WRITE_BUFFER barrier_wait
             NewL
+
             push rax
             mov rax, 35
             mov rdi, timespec
@@ -89,7 +87,11 @@ _start:
     _try_lock:
         push rax
         push rax
-        mov rbx, _lock
+        ; cmpxchg mem, reg
+        ;   if mem == rax, mem = reg
+        ;   else rax = mem
+        ; mem == rax, mem = reg ? rax = mem
+        mov rax, 0
         mov rcx, 0
         lock cmpxchg qword [rbx], rcx
         je _mutex_lock
