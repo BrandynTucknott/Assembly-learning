@@ -11,9 +11,6 @@ section .data
     parent_thread_msg db "From parent thread", 0
     child_thread_msg db "From child thread", 0
 
-    thread0_id dq 0
-    thread1_id dq 0
-
 section .bss
     thread1_stack resb thread_stack_size
     stack_ptr resq 1
@@ -36,13 +33,7 @@ _start:
     test rax, rax       ; check for thread creation errors
     jl thread_error
 
-    ; save thread num
-    ; cmp rax, 0
-    ; je _save_child_thread_id
-    ; jmp thread_functions
-
-    ; ; save child thread id
-    ; mov [thread1_id], rax
+    ; save thread id
     push rax
 
     thread_functions:
@@ -51,17 +42,21 @@ _start:
 
         ; cmpxchg mem, reg
         ; mem == rax, mem = reg ? rax = mem
+        ; mutex lock
         _try_lock:
-            lock cmpxchg [_lock], rbx
-            je _write_message
+            lock cmpxchg [_lock], rbx   ; atomic thread filter
+            je _lock_acquired
+            jmp _spin
 
-            ; if not equal, wait and try again
+        _spin:
+            pause       ; optimization bc using spin-lock?
             mov rax, 35
             mov rdi, timespec
             syscall
             mov rax, 0  ; get ready for another _try_lock cmpxchg
+            jmp _try_lock
 
-        _write_message:
+        _lock_acquired:
             pop rax
             cmp rax, 0
             jnz _do_child_function
