@@ -1,0 +1,29 @@
+This file contains information on all macros and functions in the library64.asm file
+
+All macros for use:
+  EXIT - exit code (0 - 255)
+  NL
+  NEWLINES - number of new lines
+  SPACE
+  ZERO_BUFFER - buffer, buffer length
+  WRITE_BUFFER - buffer
+  WRITE_BUFFERLEN - buffer, buffer length
+  WRITE_UINT - unsigned int
+
+
+All functions for use:
+  ZeroBuffer - given a buffer, fills all entries with 0s
+      input - rax: buffer, rbx: buffer length
+
+  WriteBuffer - writes the char* buffer to the console
+      input - rsi: buffer
+
+  WriteUInt - given an unsigned integer, prints that value to the console
+      input - rax: unsigned integer
+
+  OpenFile - opens a file with the given name
+      input - rax: file name, rdi: 
+      output - rax: file descriptor
+
+  CloseFile - closes the file with the given file descriptor
+      input - rax: file descriptor

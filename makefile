@@ -9,4 +9,5 @@ d1_test: d1.asm
 	./d1 d1_test.txt
 
 clean: d1.asm
-	find -maxdepth 1 -type f -executable ! -name "*.asm" ! -name "*.txt" ! -name "makefile" | xargs rm
+	rm *.o
+	find -maxdepth 1 -type f -executable -delete ! -name "*.asm" ! -name "*.txt" ! -name "makefile"

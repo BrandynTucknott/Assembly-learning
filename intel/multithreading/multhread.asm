@@ -71,7 +71,7 @@ _start:
             WRITE_UINT [thread1_barrier]
             SPACE
             WRITE_BUFFER barrier_wait
-            NewL
+            NL
 
             push rax
             mov rax, 35
@@ -109,7 +109,7 @@ _start:
         WRITE_BUFFER hello    ; execute process
         pop rax             ; retrieve TID
         WRITE_UINT rax
-        NewL
+        NL
 
         cmp rax, 0
         jne child_thread_iterate

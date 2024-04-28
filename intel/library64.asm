@@ -4,26 +4,13 @@
 ; Description:
 ;   A collection of MACROS and functions for commonly used features in higher level lanuages.
 ;   This library is meant for Intel x86_64 architecture.
-; All macros for use:
-;   PUSHAD64
-;   POPAD64
-;   EXIT - exit code (0 - 255)
-;   NL, NewL
-;   SPACE
-;   ZERO_BUFFER - buffer, buffer length
-;   WRITE_BUFFER - buffer
-;   WRITE_BUFFERL - buffer, buffer length
-;   WRITE_UINT - unsigned int
-; All functions for use:
-;   ZeroBuffer - rsi: buffer, rdi: buffer length
-;   WriteBuffer - rsi: buffer
-;   WriteUInt - rax: unsigned integer
 section .bss
-    str21_buffer resb 21 ; 21 byte buffer (mainly for WriteUInt and WriteInt)
+    str21_buffer resb 21    ; 21 byte buffer (mainly for WriteUInt and WriteInt)
 
 section .data
     new_line_str db 10 ; 10 = new line char in ascii
     space_str db " "
+    hyphen_str db "-"
 
 section .text
 ; =======================================================================================================================
@@ -31,41 +18,6 @@ section .text
 ; MACRO DEFINITIONS
 ; =======================================================================================================================
 ; =======================================================================================================================
-; pushes in this order: rax, rbx, rcx, rdx, rsi, rdi, r8 - r15
-%macro PUSHAD64 0
-    push rax
-    push rbx
-    push rcx
-    push rdx
-    push rsi
-    push rdi
-    push r8
-    push r9
-    push r10
-    push r11
-    push r12
-    push r13
-    push r14
-    push r15
-%endmacro
-
-; pops in this order: rdx, rcx, rbx, rax
-%macro POPAD64 0
-    pop r15
-    pop r14
-    pop r13
-    pop r12
-    pop r11
-    pop r10
-    pop r9
-    pop r8
-    pop rdi
-    pop rsi
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
-%endmacro
 
 ; exits the program with given exit code
 %macro EXIT 1 ; exit code
@@ -80,27 +32,42 @@ section .text
     push rdi
     push rsi
     push rdx
+    push rcx        ; needs to be pushed bc syscall modifies rcx:r11
+    push r11
     mov rax, 1
     mov rdi, 1
     mov rsi, new_line_str
     mov rdx, 1
     syscall
+    pop r11
+    pop rcx
     pop rdx
     pop rsi
     pop rdi
     pop rax
 %endmacro
 
-%macro NewL 0
+%macro NEWLINES 1
     push rax
     push rdi
     push rsi
     push rdx
+    push rcx        ; needs to be pushed bc syscall modifies rcx:r11
+    push r11
+
+    mov rcx, %1     ; how many newlines to print
     mov rax, 1
     mov rdi, 1
     mov rsi, new_line_str
     mov rdx, 1
-    syscall
+    _NEWLINES_loop:
+        push rcx
+        syscall     ; rcx:r11 are changed during syscall
+        pop rcx
+        loop _NEWLINES_loop
+
+    pop r11
+    pop rcx
     pop rdx
     pop rsi
     pop rdi
@@ -113,11 +80,15 @@ section .text
     push rdi
     push rsi
     push rdx
+    push rcx        ; needs to be pushed bc syscall modifies rcx:r11
+    push r11
     mov rax, 1
     mov rdi, 1
     mov rsi, space_str
     mov rdx, 1
     syscall
+    pop r11
+    pop rcx
     pop rdx
     pop rsi
     pop rdi
@@ -126,14 +97,14 @@ section .text
 
 ; zeros out the given buffer
 %macro ZERO_BUFFER 2 ; buffer, buffer length
-    push rsi
-    push rdi
-    mov rsi, %1 ; eax = buffer
-    mov rdi, %2 ; ebx = buffer length
+    push rax
+    push rbx
+    mov rax, %1
+    mov rbx, %2
 
     call ZeroBuffer
-    pop rdi
-    pop rsi
+    pop rbx
+    pop rax
 %endmacro
 
 ; prints all values in the buffer to the console (until it hits the null char)
@@ -145,16 +116,20 @@ section .text
 %endmacro
 
 ; prints all (buffer length) values in the buffer to the console
-%macro WRITE_BUFFERL 2 ; buffer, buffer length
+%macro WRITE_BUFFERLEN 2 ; buffer, buffer length
     push rax
     push rdi
     push rsi
     push rdx
+    push rcx        ; needs to be pushed bc syscall modifies rcx:r11
+    push r11
     mov rax, 1
     mov rdi, 1
     mov rsi, %1
     mov rdx, %2
     syscall
+    pop r11
+    pop rcx
     pop rdx
     pop rsi
     pop rdi
@@ -175,14 +150,12 @@ section .text
 ; =======================================================================================================================
 ; fills the input buffer with 0's
 ; input:
-;   rsi - buffer
-;   rdi - length
+;   rax - buffer
+;   rbx - length
 ; output:
 ;   fills buffer with 0's
 ZeroBuffer:
-    PUSHAD64
-    mov rax, rsi ; buffer
-    mov rbx, rdi ; buffer length
+    push rcx
     mov rcx, 0 ; loop counter
     zero_buffer_loop:
         ; if we have checked all spaces in the buffer
@@ -196,7 +169,7 @@ ZeroBuffer:
         jmp zero_buffer_loop
 
     zero_buffer_end:
-        POPAD64
+        pop rcx
         ret
 ; prints all chars in the buffer
 ; input:
@@ -204,7 +177,11 @@ ZeroBuffer:
 ; output:
 ;   prints the buffer to console
 WriteBuffer:
-    PUSHAD64
+    push rax
+    push rsi
+    push rdx
+    push rcx        ; needs to be pushed bc syscall modifies rcx:r11
+    push r11
     ; loop through and find length of buffer (find null char)
     mov rax, rsi ; rax = buffer
     mov rdx, 0 ; rdx = length
@@ -223,7 +200,11 @@ WriteBuffer:
         ; rsi already == char*
         ; rdx already == length
         syscall
-        POPAD64
+        pop r11
+        pop rcx
+        pop rdx
+        pop rsi
+        pop rax
         ret
 
 ; =======================================================================================================================
@@ -231,13 +212,16 @@ WriteBuffer:
 ; FUNCTION DEFINITIONS
 ; =======================================================================================================================
 ; =======================================================================================================================
-; prints the number stored in eax
+; prints the number stored in rax
 ; input:
 ;   rax - unsigned integer N
 ; output:
 ;   prints rax to the console
 WriteUInt:
-    PUSHAD64
+    push rax
+    push rbx
+    push rcx
+    push rdx
 
     ; zero out the string buffer
     ZERO_BUFFER str21_buffer, 21
@@ -263,6 +247,45 @@ WriteUInt:
     ; end of writeUInt_N loop - ebx contains the address of the first digit (greatest decimal digit)
     print_string_buffer_writeUInt:
         WRITE_BUFFER rbx
-        POPAD64
+        pop rdx
+        pop rcx
+        pop rbx
+        pop rax
         ret
 ; END OF WriteUInt ==================================================
+
+; opens a specific file (fopen)
+; input:
+;   rax - file name (char*)
+; output:
+;   opens the file with the given file name
+;   rax - fd (file descriptor)
+OpenFile:
+    push rdi
+    push rsi
+    push rdx
+    ;   rax - file name (const char*)
+    ;   rdi - flags (int)
+    ;   rdx - mode (int)
+    mov rdi, rax    ; char* file name
+    mov rax, 2      ; syscall num
+    mov rsi, 0      ; flags
+    mov rdx, 0      ; mode: RD 0 / WR 1 / RD + WR
+    syscall
+    pop rdx
+    pop rsi
+    pop rdi
+; END OF OpenFile ==================================================
+
+; opens a specific file (fopen)
+; input:
+;   rax - fd (file descriptor)
+; output:
+;   closes the file
+CloseFile:
+    push rdi
+    mov rdi, rax    ; fd
+    mov rax, 2      ; syscall num
+    syscall
+    pop rdi
+; END OF CloseFile ==================================================

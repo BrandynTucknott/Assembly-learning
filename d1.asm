@@ -39,25 +39,15 @@ _start:
         mov rax, 0
         mov rdi, [fd]
         mov rsi, fbuffer
-        mov rdx, 3
+        mov rdx, 1000
         syscall
         ; parse buffer and modify counts
-        mov rbx, QWORD fbuffer
+        mov rbx, fbuffer
         mov rcx, 0
         _parse_buffer_loop:
             mov rax, 4
             mul rcx
-            xor rdx, rdx
-            mov BYTE rdx, [rbx + rax]
-
-            WRITE_UINT rdx
-            NL
-            ; WRITE_UINT rdx
-            ; NL
-            ; WRITE_UINT rdx
-            ; NL
-            ; WRITE_UINT rdx
-            ; NL
+            mov rdx, [rbx + rax]
 
             cmp rdx, 40         ; ascii 40 == '('
             jz _end_of_buffer_null_char
