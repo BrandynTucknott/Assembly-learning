@@ -8,9 +8,10 @@ section .bss
     str21_buffer resb 21    ; 21 byte buffer (mainly for WriteUInt and WriteInt)
 
 section .data
-    new_line_str db 10 ; 10 = new line char in ascii
+    new_line_str db 10 ; 10 = ascii new line char
     space_str db " "
     hyphen_str db "-"
+    tab db 9 ; 9 = ascii tab char
 
 section .text
 ; =======================================================================================================================
@@ -74,6 +75,26 @@ section .text
     pop rax
 %endmacro
 
+%macro HYPHEN 0
+    push rax
+    push rdi
+    push rsi
+    push rdx
+    push rcx        ; needs to be pushed bc syscall modifies rcx:r11
+    push r11
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, hyphen_str
+    mov rdx, 1
+    syscall
+    pop r11
+    pop rcx
+    pop rdx
+    pop rsi
+    pop rdi
+    pop rax
+%endmacro
+
 ; print the space char ' ' to the console
 %macro SPACE 0
     push rax
@@ -85,6 +106,26 @@ section .text
     mov rax, 1
     mov rdi, 1
     mov rsi, space_str
+    mov rdx, 1
+    syscall
+    pop r11
+    pop rcx
+    pop rdx
+    pop rsi
+    pop rdi
+    pop rax
+%endmacro
+
+%macro TAB 0
+    push rax
+    push rdi
+    push rsi
+    push rdx
+    push rcx        ; needs to be pushed bc syscall modifies rcx:r11
+    push r11
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, tab
     mov rdx, 1
     syscall
     pop r11
@@ -139,8 +180,10 @@ section .text
 ; prints unsigned integer
 %macro WRITE_UINT 1 ; unsigned int
     push rax
+    push rcx
     mov rax, %1
     call WriteUInt
+    pop rcx
     pop rax
 %endmacro
 ; =======================================================================================================================
