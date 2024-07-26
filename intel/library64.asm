@@ -318,24 +318,39 @@ WriteInt:
     push rsi
 
     ; zero out str buffer
+    push rax
     mov rax, str21_buffer
     mov rbx, 21
     call ZeroBuffer
+    pop rax
     mov rbx, str21_buffer
 
     bsr rdi, rax ; rdi != 63 --> 2^63 bit (sign bit in this case) == 0
+
     ; ignore the highest bit from now on
     mov rcx, 01111111111111111111111111111111111111111111111111111111b
     and rax, rcx ; this and instruction deletes the highest bit
-    
-    not rax ; convert from two's complement to normal binary
-    inc rax
+
+
+    ; TODO: CURRENT ISSUE: not printing correctly
+    ; likely solvable by using HYPHEN and WRITE_UINT macros, but this involves 2+ syscalls, 
+    ; so I would like to avoid this. Instead, I aim to put everything in one buffer and print
+    ; the buffer (this method would use 1 syscall)
+
+
+
     
     ; mov negative sign in
     cmp rdi, 63
-    jl WriteInt_N ; N >= 0
+    jl writeInt_N ; N >= 0
+    ; N < 0
+    not rax ; convert from two's complement to normal binary
+    inc rax
+    mov qword [rbx], 45
+    dec rbx ; 20 will be added later, but only 19 should be added, so pre-emptively subtract 1
 
     ; mov rest of digits in
+    add qword rbx, 20
     writeInt_N:
         ; update indicies
         sub rbx, 1
