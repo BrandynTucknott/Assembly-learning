@@ -310,6 +310,14 @@ WriteUInt:
 ; output:
 ;   prints rax to the console
 WriteInt:
+    push rax
+    WRITE_UINT rax
+    NL
+    not rax
+    WRITE_UINT rax
+    NL
+    pop rax
+    ret
 ; END OF WriteInt ===================================================
 
 ; opens a specific file (fopen)
@@ -333,6 +341,7 @@ OpenFile:
     pop rdx
     pop rsi
     pop rdi
+    ret
 ; END OF OpenFile ==================================================
 
 ; opens a specific file (fopen)
@@ -346,4 +355,5 @@ CloseFile:
     mov rax, 2      ; syscall num
     syscall
     pop rdi
+    ret
 ; END OF CloseFile ==================================================
