@@ -180,12 +180,19 @@ section .text
 ; prints unsigned integer
 %macro WRITE_UINT 1 ; unsigned int
     push rax
-    push rcx
     mov rax, %1
     call WriteUInt
-    pop rcx
     pop rax
 %endmacro
+
+; prints signed integer
+%macro WRITE_INT 1 ; signed int
+    push rax
+    mov rax, %1
+    call WriteInt
+    pop rax
+%endmacro
+
 ; =======================================================================================================================
 ; =======================================================================================================================
 ; HELPER FUNCTION DEFINITIONS
@@ -255,7 +262,7 @@ WriteBuffer:
 ; FUNCTION DEFINITIONS
 ; =======================================================================================================================
 ; =======================================================================================================================
-; prints the number stored in rax
+; prints the unsigned integer stored in rax
 ; input:
 ;   rax - unsigned integer N
 ; output:
@@ -296,6 +303,14 @@ WriteUInt:
         pop rax
         ret
 ; END OF WriteUInt ==================================================
+
+; prints the integer stored in rax
+; input:
+;   rax - signed integer N
+; output:
+;   prints rax to the console
+WriteInt:
+; END OF WriteInt ===================================================
 
 ; opens a specific file (fopen)
 ; input:
