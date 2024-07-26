@@ -151,7 +151,7 @@ section .text
 ; prints all values in the buffer to the console (until it hits the null char)
 %macro WRITE_BUFFER 1
     push rsi
-    mov rsi, %1 ; ecx = buffer
+    mov rsi, %1 ; rsi = buffer
     call WriteBuffer
     pop rsi
 %endmacro
