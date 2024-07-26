@@ -272,6 +272,7 @@ WriteUInt:
     push rbx
     push rcx
     push rdx
+    push rdi        ; for some reason this has to be added here bc data was being overwritten idk
 
     ; zero out the string buffer
     ZERO_BUFFER str21_buffer, 21
@@ -297,6 +298,7 @@ WriteUInt:
     ; end of writeUInt_N loop - ebx contains the address of the first digit (greatest decimal digit)
     print_string_buffer_writeUInt:
         WRITE_BUFFER rbx
+        pop rdi
         pop rdx
         pop rcx
         pop rbx
@@ -328,9 +330,8 @@ WriteInt:
     bsr rdi, rax ; rdi != 63 --> 2^63 bit (sign bit in this case) == 0
 
     ; ignore the highest bit from now on
-    mov rcx, 01111111111111111111111111111111111111111111111111111111b
-    and rax, rcx ; this and instruction deletes the highest bit
-
+    ; mov rcx, 0111111111111111111111111111111111111111111111111111111111111111b
+    ; and rax, rcx ; this and instruction deletes the highest bit
 
     ; TODO: CURRENT ISSUE: not printing correctly
     ; likely solvable by using HYPHEN and WRITE_UINT macros, but this involves 2+ syscalls, 
@@ -338,41 +339,45 @@ WriteInt:
     ; the buffer (this method would use 1 syscall)
 
 
-
-    
     ; mov negative sign in
     cmp rdi, 63
     jl writeInt_N ; N >= 0
     ; N < 0
     not rax ; convert from two's complement to normal binary
-    inc rax
-    mov qword [rbx], 45
-    dec rbx ; 20 will be added later, but only 19 should be added, so pre-emptively subtract 1
+    mov rcx, 0111111111111111111111111111111111111111111111111111111111111111b
+    and rax, rcx ; deletes the highest bit (sign bit). NOT will undo this if done before NOT instruction
+    inc rax ; finish conversion
+    HYPHEN
+
+
+    ; mov qword [rbx], 45
+    ; dec rbx ; 20 will be added later, but only 19 should be added, so pre-emptively subtract 1
 
     ; mov rest of digits in
-    add qword rbx, 20
+    ; add qword rbx, 20
     writeInt_N:
+        WRITE_UINT rax
         ; update indicies
-        sub rbx, 1
+        ; sub rbx, 1
 
-        ; N /= 10, add remainder to string buffer
-        ; rax already contains the num to divide
-        mov rdx, 0 ; make sure rdx:rax = rax
-        mov rcx, 10
-        div rcx ; rdx holds remainder, rax the quotient
-        ; store remainder in buffer
-        mov [rbx], dl
-        add BYTE [rbx], 48 ; convert to ascii
-        cmp rax, 0
-        je print_str_buffer_writeInt
-        jmp writeInt_N ; repeat until N is 0
+        ; ; N /= 10, add remainder to string buffer
+        ; ; rax already contains the num to divide
+        ; mov rdx, 0 ; make sure rdx:rax = rax
+        ; mov rcx, 10
+        ; div rcx ; rdx holds remainder, rax the quotient
+        ; ; store remainder in buffer
+        ; mov [rbx], dl
+        ; add BYTE [rbx], 48 ; convert to ascii
+        ; cmp rax, 0
+        ; je print_str_buffer_writeInt
+        ; jmp writeInt_N ; repeat until N is 0
     ; print val
-    print_str_buffer_writeInt:
-        mov rax, 1
-        mov rdi, 1
-        mov rsi, str21_buffer
-        mov rdx, 21
-        syscall
+    ; print_str_buffer_writeInt:
+        ; mov rax, 1
+        ; mov rdi, 1
+        ; mov rsi, str21_buffer
+        ; mov rdx, 21
+        ; syscall
 
     pop rsi
     pop rdi

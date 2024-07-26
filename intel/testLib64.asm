@@ -100,12 +100,15 @@ _start:
     mov rax, 0
     call WriteInt
     NL
-    ; dec rax
-    ; call WriteInt
-    ; NL
-    ; mov rax, 1
-    ; call WriteInt
-    ; NL
+    mov rax, 5
+    call WriteInt
+    NL
+    sub rax, 6
+    call WriteInt
+    NL
+    mov rax, -10
+    call WriteInt
+    NL
     WRITE_BUFFER green
     WRITE_BUFFER endSignedIntTest
     WRITE_BUFFER reset
