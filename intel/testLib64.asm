@@ -97,7 +97,13 @@ _start:
     WRITE_BUFFER cyan
     WRITE_BUFFER beginSignedIntTest
     WRITE_BUFFER reset
-    mov rax, 10
+    mov rax, 0
+    call WriteInt
+    NL
+    dec rax
+    call WriteInt
+    NL
+    mov rax, 1
     call WriteInt
     NL
     WRITE_BUFFER green

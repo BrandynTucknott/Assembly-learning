@@ -311,11 +311,59 @@ WriteUInt:
 ;   prints rax to the console
 WriteInt:
     push rax
-    WRITE_UINT rax
-    NL
-    not rax
-    WRITE_UINT rax
-    NL
+    push rbx
+    push rcx
+    push rdx
+    push rdi
+    push rsi
+
+    ; zero out str buffer
+    mov rax, str21_buffer
+    mov rbx, 21
+    call ZeroBuffer
+    mov rbx, str21_buffer
+
+    bsr rdi, rax ; rdi != 63 --> 2^63 bit (sign bit in this case) == 0
+    ; ignore the highest bit from now on
+    mov rcx, 01111111111111111111111111111111111111111111111111111111b
+    and rax, rcx ; this and instruction deletes the highest bit
+    
+    not rax ; convert from two's complement to normal binary
+    inc rax
+    
+    ; mov negative sign in
+    cmp rdi, 63
+    jl WriteInt_N ; N >= 0
+
+    ; mov rest of digits in
+    writeInt_N:
+        ; update indicies
+        sub rbx, 1
+
+        ; N /= 10, add remainder to string buffer
+        ; rax already contains the num to divide
+        mov rdx, 0 ; make sure rdx:rax = rax
+        mov rcx, 10
+        div rcx ; rdx holds remainder, rax the quotient
+        ; store remainder in buffer
+        mov [rbx], dl
+        add BYTE [rbx], 48 ; convert to ascii
+        cmp rax, 0
+        je print_str_buffer_writeInt
+        jmp writeInt_N ; repeat until N is 0
+    ; print val
+    print_str_buffer_writeInt:
+        mov rax, 1
+        mov rdi, 1
+        mov rsi, str21_buffer
+        mov rdx, 21
+        syscall
+
+    pop rsi
+    pop rdi
+    pop rdx
+    pop rcx
+    pop rbx
     pop rax
     ret
 ; END OF WriteInt ===================================================
