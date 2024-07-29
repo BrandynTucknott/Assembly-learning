@@ -341,43 +341,42 @@ WriteInt:
 
     ; mov negative sign in
     cmp rdi, 63
-    jl writeInt_N ; N >= 0
+    jl pre_writeInt_N ; N >= 0
     ; N < 0
     not rax ; convert from two's complement to normal binary
     mov rcx, 0111111111111111111111111111111111111111111111111111111111111111b
     and rax, rcx ; deletes the highest bit (sign bit). NOT will undo this if done before NOT instruction
     inc rax ; finish conversion
-    HYPHEN
 
 
-    ; mov qword [rbx], 45
-    ; dec rbx ; 20 will be added later, but only 19 should be added, so pre-emptively subtract 1
+    mov qword [rbx], 45
+    dec rbx ; 20 will be added later, but only 19 should be added, so pre-emptively subtract 1
 
     ; mov rest of digits in
-    ; add qword rbx, 20
+    pre_writeInt_N:
+        add qword rbx, 20
     writeInt_N:
-        WRITE_UINT rax
         ; update indicies
-        ; sub rbx, 1
+        sub rbx, 1
 
-        ; ; N /= 10, add remainder to string buffer
-        ; ; rax already contains the num to divide
-        ; mov rdx, 0 ; make sure rdx:rax = rax
-        ; mov rcx, 10
-        ; div rcx ; rdx holds remainder, rax the quotient
-        ; ; store remainder in buffer
-        ; mov [rbx], dl
-        ; add BYTE [rbx], 48 ; convert to ascii
-        ; cmp rax, 0
-        ; je print_str_buffer_writeInt
-        ; jmp writeInt_N ; repeat until N is 0
+        ; N /= 10, add remainder to string buffer
+        ; rax already contains the num to divide
+        mov rdx, 0 ; make sure rdx:rax = rax
+        mov rcx, 10
+        div rcx ; rdx holds remainder, rax the quotient
+        ; store remainder in buffer
+        mov [rbx], dl
+        add BYTE [rbx], 48 ; convert to ascii
+        cmp rax, 0
+        je print_str_buffer_writeInt
+        jmp writeInt_N ; repeat until N is 0
     ; print val
-    ; print_str_buffer_writeInt:
-        ; mov rax, 1
-        ; mov rdi, 1
-        ; mov rsi, str21_buffer
-        ; mov rdx, 21
-        ; syscall
+    print_str_buffer_writeInt:
+        mov rax, 1
+        mov rdi, 1
+        mov rsi, str21_buffer
+        mov rdx, 21
+        syscall
 
     pop rsi
     pop rdi
