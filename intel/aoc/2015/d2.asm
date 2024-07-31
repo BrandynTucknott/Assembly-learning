@@ -40,6 +40,11 @@ _start:
     NL
 
     _read_file:
+        ; option 1 - read 1 char at a time for simplicity. Much slower, 1 syscall / char in file
+        ; option 2 - read multiple chars at a time. Faster, but more complex. Not easy bc a box's
+        ;            dimensions could be split up between multiple buffers. This needs to be handled.
+        ;                   Ex. 'LxWxH' --> buffer1: 'LxW', buffer2: 'xH'
+
         ; get buffer
         mov rax, 0
         mov rdi, [fd]
