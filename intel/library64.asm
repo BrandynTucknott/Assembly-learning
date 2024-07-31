@@ -387,6 +387,20 @@ WriteInt:
     ret
 ; END OF WriteInt ===================================================
 
+; finds the length of a null-terminated string
+; input:
+;   rax - buffer (string)
+; output
+;   rax - string length
+; Excludes:
+;   ascii 0-8; 11-31
+StrLen:
+    ; for char in buffer
+    ;   if char is not excluded
+    ;       length++
+    ;
+    ret
+
 ; opens a specific file (fopen)
 ; input:
 ;   rax - file name (char*)

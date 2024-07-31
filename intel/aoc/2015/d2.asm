@@ -5,17 +5,18 @@ section .data
     fclosed db "file successfully closed", 0
 
     fbuffer_size equ 1000
-    fd dq 1 dup(0)
-    fbuffer db fbuffer_size dup(0)
-    temp_buffer db fbuffer_size dup(0)      ; holds remnants from buffer that are present when buffer ends (but end of line has not been found yet)
-    
-    length_buffer db fbuffer_size dup(0)    ; stores the length, width, and height (string format) of a singular box
-    width_buffer db fbuffer_size dup(0)
-    height_buffer db buffer_size dup(0)
 
-; section .bss
-    ; fd resq 1
-    ; fbuffer resb fbuffer_size
+section .bss
+    fd resq 1
+    fbuffer resb fbuffer_size
+
+    ; stores the length, width, and height (string format) of a singular box
+    length_buffer resb fbuffer_size
+    width_buffer resb fbuffer_size
+    height_buffer resb fbuffer_size
+
+    ; stores the number of steps the fd should step back (is a negative number)
+    offset resq 1
 
 section .text
 global _start
@@ -45,12 +46,72 @@ _start:
         ;            dimensions could be split up between multiple buffers. This needs to be handled.
         ;                   Ex. 'LxWxH' --> buffer1: 'LxW', buffer2: 'xH'
 
-        ; get buffer
+        ; fill buffer
         mov rax, 0
         mov rdi, [fd]
         mov rsi, fbuffer
         mov rdx, fbuffer_size
         syscall
+
+        ; TEST: print buffer contents
+        WRITE_BUFFER fbuffer
+        NEWLINES 3
+        
+        ; read buffer and count characters until the first \n is found
+        mov rax, fbuffer
+        mov qword [offset], 0
+        xor rdx, rdx    ; temp register to store the single char from buffer
+        _read_1_char: ; offset operates as a tmp variable here until it is set in _set_offset
+            ; xor rdx, rdx
+            mov dl, [rax]
+            ; WRITE_UINT rdx
+            ; NL
+            inc qword [offset] ; recall offset here is num_chars_before_first_newline
+            cmp dl, 10 ; 10 = newline
+            je _set_offset
+
+            ; cmp dl, 0
+            ; je _set_offset
+
+            ; keep looking
+            inc rax
+            jmp _read_1_char
+        
+        _set_offset:
+            ; set offset to fbuffer_size - num_chars_before_first_newline
+            ; HYPHEN
+            ; HYPHEN
+            ; HYPHEN
+            ; NL
+            mov rax, fbuffer_size
+            mov rdi, [offset]
+            sub rdi, rax ; rdi - rax = -(rax - rdi) = -(num_chars_to_move_back [pos int]) = [neg int]
+            mov qword [offset], rdi
+            WRITE_INT [offset]
+        
+        ; TEST: move SEEK_CUR back
+        ; rdx = 0: SEEK_SET
+        ; rdx = 1: SEEK_CUR
+        ; rdx = 2: SEEK_END
+        mov rax, 8
+        mov rdi, [fd]
+        mov rsi, [offset]
+        mov rdx, 1
+        syscall
+        ; TEST: re-fill buffer
+        ZERO_BUFFER fbuffer, fbuffer_size
+        mov rax, 0
+        mov rdi, [fd]
+        mov rsi, fbuffer
+        mov rdx, fbuffer_size
+        syscall
+        ; TEST: print buffer contents
+        WRITE_BUFFER fbuffer
+        NL
+        HYPHEN
+        HYPHEN
+        HYPHEN
+        NL
 
         ; parse buffer: assumes there is at least 1 box (LxWxH\n) in the buffer
         _parse_buffer:
