@@ -46,6 +46,8 @@ _start:
         ;            dimensions could be split up between multiple buffers. This needs to be handled.
         ;                   Ex. 'LxWxH' --> buffer1: 'LxW', buffer2: 'xH'
 
+        ; the following methods uses option 1
+
         ; fill buffer
         mov rax, 0
         mov rdi, [fd]
@@ -53,22 +55,20 @@ _start:
         mov rdx, fbuffer_size
         syscall
 
-        ; TEST: print buffer contents
+        ; REMOVE_ME: print buffer contents
         WRITE_BUFFER fbuffer
-        NEWLINES 3
+        NL
         
         ; read buffer and count characters until the first \n is found
         mov rax, fbuffer
         mov qword [offset], 0
         xor rdx, rdx    ; temp register to store the single char from buffer
-        _read_1_char: ; offset operates as a tmp variable here until it is set in _set_offset
+        _read_1_char: ; offset operates as a tmp variable here until it is set in _parse_buffer
             ; xor rdx, rdx
             mov dl, [rax]
-            ; WRITE_UINT rdx
-            ; NL
-            inc qword [offset] ; recall offset here is num_chars_before_first_newline
+            dec qword [offset] ; recall offset here is num_chars_before_first_newline
             cmp dl, 10 ; 10 = newline
-            je _set_offset
+            je _parse_buffer
 
             ; cmp dl, 0
             ; je _set_offset
@@ -77,17 +77,26 @@ _start:
             inc rax
             jmp _read_1_char
         
-        _set_offset:
+        _parse_buffer: ; 1 box at a time
             ; set offset to fbuffer_size - num_chars_before_first_newline
             ; HYPHEN
             ; HYPHEN
             ; HYPHEN
             ; NL
-            mov rax, fbuffer_size
-            mov rdi, [offset]
-            sub rdi, rax ; rdi - rax = -(rax - rdi) = -(num_chars_to_move_back [pos int]) = [neg int]
-            mov qword [offset], rdi
+            ; mov rax, fbuffer_size
+            ; mov rdi, [offset]
+            ; sub rdi, rax ; rdi - rax = -(rax - rdi) = -(num_chars_to_move_back [pos int]) = [neg int]
+            ; mov qword [offset], rdi
             WRITE_INT [offset]
+            ; fill length
+            ; fill width
+            ; fill height
+            mov qword [offset], 0
+            NL
+            HYPHEN
+            HYPHEN
+            HYPHEN
+            NL
         
         ; TEST: move SEEK_CUR back
         ; rdx = 0: SEEK_SET
@@ -95,7 +104,8 @@ _start:
         ; rdx = 2: SEEK_END
         mov rax, 8
         mov rdi, [fd]
-        mov rsi, [offset]
+        ; mov rsi, [offset]
+        mov rsi, -5
         mov rdx, 1
         syscall
         ; TEST: re-fill buffer
@@ -107,19 +117,10 @@ _start:
         syscall
         ; TEST: print buffer contents
         WRITE_BUFFER fbuffer
-        NL
         HYPHEN
         HYPHEN
         HYPHEN
         NL
-
-        ; parse buffer: assumes there is at least 1 box (LxWxH\n) in the buffer
-        _parse_buffer:
-            ; fill length
-            ; fill width
-            ; fill height
-
-            ; check if there one other box in the buffer (look for \n char)
         
 
     ; close file
