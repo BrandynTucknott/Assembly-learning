@@ -1,8 +1,8 @@
 %include "../../library64.asm"
 
 section .data
-    fopened db "file successfully opened", 0
-    fclosed db "file successfully closed", 0
+    fopened db 27, "[32mfile successfully opened", 27, "[0m", 0
+    fclosed db 27, "[32mfile successfully closed", 27, "[0m", 0
 
     fbuffer_size equ 1000
 
@@ -17,6 +17,9 @@ section .bss
 
     ; stores the number of steps the fd should step back (is a negative number)
     offset resq 1
+
+    ; stores the total length of wrapping paper required
+    wrapping_paper_length resq 1
 
 section .text
 global _start
@@ -41,13 +44,6 @@ _start:
     NL
 
     _read_file:
-        ; option 1 - read 1 char at a time for simplicity. Much slower, 1 syscall / char in file
-        ; option 2 - read multiple chars at a time. Faster, but more complex. Not easy bc a box's
-        ;            dimensions could be split up between multiple buffers. This needs to be handled.
-        ;                   Ex. 'LxWxH' --> buffer1: 'LxW', buffer2: 'xH'
-
-        ; the following methods uses option 1
-
         ; fill buffer
         mov rax, 0
         mov rdi, [fd]
