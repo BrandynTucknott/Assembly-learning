@@ -14,6 +14,13 @@ section .data
     endUIntTest db "WriteUInt test complete", 10, 0
     beginSignedIntTest db "Starting WriteInt test", 10, 0
     endSignedIntTest db "WriteInt test complete", 10, 0
+    beginStrLenTest db "Starting StrLen test", 10, 0
+    endStrLenTest db "StrLen test complete", 10, 0
+
+    ; misc test variables
+    null db 0
+    len_5 db "12345", 0
+    len_10 db "0123456789", 0
 
     ; 27 = ascii 'ESCAPE'
     yellow db 27, '[93m', 0 ; ANSI escape for yellow text
@@ -45,8 +52,7 @@ _start:
     mov rsi, reset
     mov rdx, reset_len
     syscall
-
-
+    NL
 
     ; test WRITE_BUFFER macro
     mov rax, 1
@@ -69,6 +75,7 @@ _start:
     WRITE_BUFFER green
     WRITE_BUFFER endWriteBufferTest
     WRITE_BUFFER reset
+    NEWLINES 2
 
     ; test WriteUInt function
     WRITE_BUFFER cyan
@@ -92,6 +99,7 @@ _start:
     WRITE_BUFFER green
     WRITE_BUFFER endUIntTest
     WRITE_BUFFER reset
+    NEWLINES 2
 
     ; test WriteInt function
     WRITE_BUFFER cyan
@@ -112,8 +120,40 @@ _start:
     WRITE_BUFFER green
     WRITE_BUFFER endSignedIntTest
     WRITE_BUFFER reset
+    NEWLINES 2
+
+    ; test StrLen function
+    WRITE_BUFFER cyan
+    WRITE_BUFFER beginStrLenTest
+    WRITE_BUFFER reset
+
+    mov rax, null
+    call StrLen
+    call WriteUInt
+    NL
+
+    mov rax, len_5
+    call StrLen
+    call WriteUInt
+    NL
+
+    mov rax, len_10
+    call StrLen
+    call WriteUInt
+    NL
+
+    mov rax, endStrLenTest
+    call StrLen
+    call WriteUInt
+    NL
+
+    WRITE_BUFFER green
+    WRITE_BUFFER endStrLenTest
+    WRITE_BUFFER reset
+
 
     ; print ending message
+    NL
     WRITE_BUFFER yellow
     WRITE_BUFFER endLibTest
     WRITE_BUFFER reset

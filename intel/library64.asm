@@ -7,6 +7,7 @@
 section .bss
     str21_buffer resb 21    ; 21 byte buffer (mainly for WriteUInt and WriteInt)
 
+
 section .data
     new_line_str db 10 ; 10 = ascii new line char
     space_str db " "
@@ -48,32 +49,73 @@ section .text
     pop rax
 %endmacro
 
+; newlines macro uses rep stosb to print new lines
 %macro NEWLINES 1
-    push rax
-    push rdi
-    push rsi
+    push rcx
     push rdx
-    push rcx        ; needs to be pushed bc syscall modifies rcx:r11
-    push r11
+    push r12
+    push rdi
+    push rax
+    push rsi
 
-    mov rcx, %1     ; how many newlines to print
+    mov rcx, %1
+    mov rdx, rcx
+
+    mov r12, rsp ; temp store of stack pointer
+    sub rsp, 20
+    mov rdi, rsp
+
+    mov al, 10 ; fill rdi (rsp) with 10
+    rep stosb
+    mov al, 0 ; null terminate it
+    mov rcx, 1
+    rep stosb
+
+    mov rsi, rsp ; print all spaces
     mov rax, 1
     mov rdi, 1
-    mov rsi, new_line_str
-    mov rdx, 1
-    _NEWLINES_loop:
-        push rcx
-        syscall     ; rcx:r11 are changed during syscall
-        pop rcx
-        loop _NEWLINES_loop
 
-    pop r11
-    pop rcx
-    pop rdx
+    syscall
+
+    mov rsp, r12 ; restore stack pointer
     pop rsi
-    pop rdi
     pop rax
+    pop rdi
+    pop r12
+    pop rdx
+    pop rcx
 %endmacro
+
+; uses a loop to print new lines
+; %macro NEWLINES 1
+;     push rax
+;     push rdi
+;     push rsi
+;     push rdx
+;     push rcx        ; needs to be pushed bc syscall modifies rcx:r11
+;     push r11
+
+;     mov rcx, %1     ; how many newlines to print
+;     mov rax, 1
+;     mov rdi, 1
+;     mov rsi, new_line_str
+;     mov rdx, 1
+    
+;     %%local_loop:
+;         push rax ; rax contains return val or error code of syscall
+;         push rcx ; rcx:r11 are changed during syscall
+;         syscall
+;         pop rcx
+;         pop rax
+;         loop %%local_loop
+
+;     pop r11
+;     pop rcx
+;     pop rdx
+;     pop rsi
+;     pop rdi
+;     pop rax
+; %endmacro
 
 %macro HYPHEN 0
     push rax
@@ -395,10 +437,50 @@ WriteInt:
 ; Excludes:
 ;   ascii 0-8; 11-31
 StrLen:
-    ; for char in buffer
-    ;   if char is not excluded
-    ;       length++
-    ;
+    ; bl - particular char
+    ; rcx - length counter
+    ; rdx - index counter
+    push rbx
+    push rcx
+    push rdx
+    xor rbx, rbx
+    xor rcx, rcx
+    xor rdx, rdx
+
+    .L:
+        mov byte bl, [rax + rdx]
+        cmp bl, 0
+        je .L3 ; jmp, end of str
+
+        cmp bl, 10
+        je .L1 ; jmp, valid char
+
+        cmp bl, 8
+        jle .L2 ; jmp, invalid char
+
+        cmp bl, 11
+        jl .L1 ; jmp, valid char
+
+        cmp bl, 31
+        jg .L1 ; jmp, valid char
+
+        jmp .L2 ; invalid char (11  -31)
+
+    ; valid char
+    .L1:
+        inc cl
+    ; invalid character
+    .L2:
+        inc dl
+    jmp .L
+
+    ; null char
+    .L3:
+        mov rax, rcx
+
+    pop rdx
+    pop rcx
+    pop rbx
     ret
 
 ; opens a specific file (fopen)
