@@ -6,6 +6,7 @@
 ;   This library is meant for Intel x86_64 architecture.
 section .bss
     str21_buffer resb 21    ; 21 byte buffer (mainly for WriteUInt and WriteInt)
+    str55_buffer resb 55    ; 55 byte buffer (mainly for WriteFloat)
 
 
 section .data
@@ -56,6 +57,7 @@ section .text
     push r12
     push rdi
     push rax
+    push r11
     push rsi
 
     mov rcx, %1
@@ -79,43 +81,13 @@ section .text
 
     mov rsp, r12 ; restore stack pointer
     pop rsi
+    pop r11
     pop rax
     pop rdi
     pop r12
     pop rdx
     pop rcx
 %endmacro
-
-; uses a loop to print new lines
-; %macro NEWLINES 1
-;     push rax
-;     push rdi
-;     push rsi
-;     push rdx
-;     push rcx        ; needs to be pushed bc syscall modifies rcx:r11
-;     push r11
-
-;     mov rcx, %1     ; how many newlines to print
-;     mov rax, 1
-;     mov rdi, 1
-;     mov rsi, new_line_str
-;     mov rdx, 1
-    
-;     %%local_loop:
-;         push rax ; rax contains return val or error code of syscall
-;         push rcx ; rcx:r11 are changed during syscall
-;         syscall
-;         pop rcx
-;         pop rax
-;         loop %%local_loop
-
-;     pop r11
-;     pop rcx
-;     pop rdx
-;     pop rsi
-;     pop rdi
-;     pop rax
-; %endmacro
 
 %macro HYPHEN 0
     push rax
@@ -362,6 +334,7 @@ WriteInt:
     push rcx
     push rdx
     push rdi
+    push r11
     push rsi
 
     ; zero out str buffer
@@ -418,13 +391,14 @@ WriteInt:
         syscall
 
     pop rsi
+    pop r11
     pop rdi
     pop rdx
     pop rcx
     pop rbx
     pop rax
     ret
-; END OF WriteInt ===================================================
+; END OF WriteInt ==========================================================
 
 ; finds the length of a null-terminated string
 ; input:
@@ -517,3 +491,30 @@ CloseFile:
     pop rdi
     ret
 ; END OF CloseFile ==================================================
+
+; prints the float stored in rax
+; input:
+;   rax - float
+; output:
+;   prints rax to the console
+WriteFloat:
+    push rax
+    push rbx
+    push rcx
+    push r11
+
+    ; zero buffer
+    mov rbx, str55_buffer
+    ZERO_BUFFER rbx, 55
+    ; add sign
+    ; compute integer portion
+    ; add decimal point
+    ; compute decimal portion ?
+    ; add decimal portion
+
+    pop r11
+    pop rcx
+    pop rbx
+    pop rax
+    ret
+; END OF WriteFloat ============================================================

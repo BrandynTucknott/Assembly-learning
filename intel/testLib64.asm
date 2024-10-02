@@ -151,6 +151,13 @@ _start:
     WRITE_BUFFER endStrLenTest
     WRITE_BUFFER reset
 
+    ; test WriteFloat
+    
+
+
+
+
+
 
     ; print ending message
     NL
