@@ -249,20 +249,22 @@ section .text
 ZeroBuffer:
     push rcx
     mov rcx, 0 ; loop counter
-    zero_buffer_loop:
+    .L:
         ; if we have checked all spaces in the buffer
         cmp rcx, rbx
-        je zero_buffer_end
+        je .L1
 
         ; else, store zero in the byte, and increment buffer pointer
         mov BYTE [rax], 0
         inc rcx
         inc rax
-        jmp zero_buffer_loop
+        jmp .L
 
-    zero_buffer_end:
+    .L1:
         pop rcx
         ret
+; END OF ZeroBuffer ===============================================================
+
 ; prints all chars in the buffer
 ; input:
 ;   rsi - buffer (must end with a null char)
@@ -277,16 +279,16 @@ WriteBuffer:
     ; loop through and find length of buffer (find null char)
     mov rax, rsi ; rax = buffer
     mov rdx, 0 ; rdx = length
-    write_buffer_find_length:
+    .L:
         ; mov rbx, rax ; no need to push-pop rbx, it is not used elsewhere in this function
         cmp BYTE [rax], 0
-        je write_buffer_writeSYSCALL
+        je .L1
 
         inc QWORD rax
         inc QWORD rdx
-        jmp write_buffer_find_length
+        jmp .L
     ; pass to write syscall
-    write_buffer_writeSYSCALL:
+    .L1:
         mov rax, 1
         mov rdi, 1
         ; rsi already == char*
@@ -298,6 +300,7 @@ WriteBuffer:
         pop rsi
         pop rax
         ret
+; END OF WriteBuffer =====================================================================
 
 ; =======================================================================================================================
 ; =======================================================================================================================
@@ -322,7 +325,7 @@ WriteUInt:
     add QWORD rbx, 20
 
     
-    writeUInt_N:
+    .L:
         ; update indicies
         sub rbx, 1
 
@@ -335,10 +338,10 @@ WriteUInt:
         mov [rbx], dl
         add BYTE [rbx], 48 ; convert to ascii
         cmp rax, 0
-        je print_string_buffer_writeUInt
-        jmp writeUInt_N ; repeat until N is 0
-    ; end of writeUInt_N loop - ebx contains the address of the first digit (greatest decimal digit)
-    print_string_buffer_writeUInt:
+        je .L1
+        jmp .L ; repeat until N is 0
+    ; end of .L loop - ebx contains the address of the first digit (greatest decimal digit)
+    .L1:
         WRITE_BUFFER rbx
         pop rdi
         pop rdx
@@ -375,15 +378,9 @@ WriteInt:
     ; mov rcx, 0111111111111111111111111111111111111111111111111111111111111111b
     ; and rax, rcx ; this and instruction deletes the highest bit
 
-    ; TODO: CURRENT ISSUE: not printing correctly
-    ; likely solvable by using HYPHEN and WRITE_UINT macros, but this involves 2+ syscalls, 
-    ; so I would like to avoid this. Instead, I aim to put everything in one buffer and print
-    ; the buffer (this method would use 1 syscall)
-
-
     ; mov negative sign in
     cmp rdi, 63
-    jl pre_writeInt_N ; N >= 0
+    jl .L ; N >= 0
     ; N < 0
     not rax ; convert from two's complement to normal binary
     mov rcx, 0111111111111111111111111111111111111111111111111111111111111111b
@@ -395,9 +392,9 @@ WriteInt:
     dec rbx ; 20 will be added later, but only 19 should be added, so pre-emptively subtract 1
 
     ; mov rest of digits in
-    pre_writeInt_N:
+    .L:
         add qword rbx, 20
-    writeInt_N:
+    .L1:
         ; update indicies
         sub rbx, 1
 
@@ -410,10 +407,10 @@ WriteInt:
         mov [rbx], dl
         add BYTE [rbx], 48 ; convert to ascii
         cmp rax, 0
-        je print_str_buffer_writeInt
-        jmp writeInt_N ; repeat until N is 0
+        je .L2
+        jmp .L1 ; repeat until N is 0
     ; print val
-    print_str_buffer_writeInt:
+    .L2:
         mov rax, 1
         mov rdi, 1
         mov rsi, str21_buffer
