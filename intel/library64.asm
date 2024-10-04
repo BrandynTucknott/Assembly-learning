@@ -492,27 +492,57 @@ CloseFile:
     ret
 ; END OF CloseFile ==================================================
 
-; prints the float stored in rax
+; prints the float stored in rax according to IEEE754 standard
+; 1 - sign
+; 11 - exponenet
+; 52 - mantissa
 ; input:
 ;   rax - float
+;   rbx - decimal places to print
 ; output:
-;   prints rax to the console
+;   prints rax to the console with at most rbx decimal values
 WriteFloat:
     push rax
     push rbx
     push rcx
+    push rdx
     push r11
 
     ; zero buffer
+    push rbx ; save num of decimals to print
     mov rbx, str55_buffer
     ZERO_BUFFER rbx, 55
+
     ; add sign
+    ; should be 1 << 63
+    mov rcx, 1000000000000000000000000000000000000000000000000000000000000000b
+    and rcx, rax
+    jz .done_with_sign
+    ; is negative
+    mov byte [rbx], hyphen_str
+    mov rcx, 1
+
+    ; From here:
+    ;   rax - float to print
+    ;   rbx - str55_buffer
+    ;   rcx - curr length of str55_buffer
+    ;   rdx - num of decimal places to print
+    ;   r11 - exponent
+    .done_with_sign
+    pop rdx ; retrieve num of decimals to print
+
+
+    ; compute exponent
+    mov r11, 0111111111110000000000000000000000000000000000000000000000000000b
+    and r11, rax
+    sub r11, 1023
+
     ; compute integer portion
-    ; add decimal point
-    ; compute decimal portion ?
-    ; add decimal portion
+    ; compute decimal portion
+    ; add decimal portion and print
 
     pop r11
+    pop rdx
     pop rcx
     pop rbx
     pop rax
