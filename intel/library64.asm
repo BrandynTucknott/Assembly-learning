@@ -501,50 +501,55 @@ CloseFile:
 ;   rbx - decimal places to print
 ; output:
 ;   prints rax to the console with at most rbx decimal values
-WriteFloat:
-    push rax
-    push rbx
-    push rcx
-    push rdx
-    push r11
+; WriteFloat:
+;     push rax
+;     push rbx
+;     push rcx
+;     push rdx
+;     push r11
 
-    ; zero buffer
-    push rbx ; save num of decimals to print
-    mov rbx, str55_buffer
-    ZERO_BUFFER rbx, 55
+;     ; zero buffer
+;     push rbx ; save num of decimals to print
+;     mov rbx, str55_buffer
+;     ZERO_BUFFER rbx, 55
 
-    ; add sign
-    ; should be 1 << 63
-    mov rcx, 1000000000000000000000000000000000000000000000000000000000000000b
-    and rcx, rax
-    jz .done_with_sign
-    ; is negative
-    mov byte [rbx], hyphen_str
-    mov rcx, 1
+;     ; add sign
+;     ; should be 1 << 63
+;     ; mov rcx, 1000000000000000000000000000000000000000000000000000000000000000b
+;     mov rcx, 1
+;     shl rcx, 63
+;     and rcx, rax
+;     jz .done_with_sign
+;     ; is negative
+;     mov byte [rbx], hyphen_str
+;     mov rcx, 1
 
-    ; From here:
-    ;   rax - float to print
-    ;   rbx - str55_buffer
-    ;   rcx - curr length of str55_buffer
-    ;   rdx - num of decimal places to print
-    ;   r11 - exponent
-    .done_with_sign
-    pop rdx ; retrieve num of decimals to print
+;     ; From here:
+;     ;   rax - float to print
+;     ;   rbx - str55_buffer
+;     ;   rcx - curr length of str55_buffer
+;     ;   rdx - num of decimal places to print
+;     ;   r11 - exponent
+;     .done_with_sign:
+;         pop rdx ; retrieve num of decimals to print
 
 
-    ; compute exponent
-    mov r11, 0111111111110000000000000000000000000000000000000000000000000000b
-    and r11, rax
-    sub r11, 1023
+;     ; compute exponent
+;     ; should be 11111111111 << 52
+;     ; mov r11, 0111111111110000000000000000000000000000000000000000000000000000b
+;     mov r11, 11111111111
+;     shl r11, 52
+;     and r11, rax
+;     sub r11, 1023
 
-    ; compute integer portion
-    ; compute decimal portion
-    ; add decimal portion and print
+;     ; compute integer portion
+;     ; compute decimal portion
+;     ; add decimal portion and print
 
-    pop r11
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
-    ret
+;     pop r11
+;     pop rdx
+;     pop rcx
+;     pop rbx
+;     pop rax
+;     ret
 ; END OF WriteFloat ============================================================
