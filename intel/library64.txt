@@ -1,5 +1,11 @@
 This file contains information on all macros and functions in the library64.asm file
 
+Plan to implement:
+    function - WriteFloat
+    macro - WRITE_FLOAT
+    function - stoi
+    MACRO - STOI
+
 All macros for use:
   EXIT - exit code (0 - 255)
   NL
