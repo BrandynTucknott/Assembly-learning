@@ -16,6 +16,8 @@ section .data
     endSignedIntTest db "WriteInt test complete", 10, 0
     beginStrLenTest db "Starting StrLen test", 10, 0
     endStrLenTest db "StrLen test complete", 10, 0
+    beginWriteFloatTest db "Starting WriteFloat test", 10, 0
+    endWriteFloatTest db "WriteFloat test complete", 10, 0
 
     ; misc test variables
     null db 0
@@ -152,7 +154,52 @@ _start:
     WRITE_BUFFER reset
 
     ; test WriteFloat
-    
+    WRITE_BUFFER cyan
+    WRITE_BUFFER beginWriteFloatTest
+    WRITE_BUFFER reset
+
+    ; should be 1.25
+    mov rax, 0x3fa00000
+    call WriteFloat
+    NL
+
+    ; should be -1.25
+    mov rax, 0xbfa00000
+    NL
+
+    ; should be 14.3333
+    mov rax, 0x41655532
+    NL
+
+    ; should be -14.3333
+    mov rax, 0xc1655532
+    NL
+
+    ; should be 0
+    mov rax, 0
+    NL
+
+    ; should be -0
+    mov rax, 0x80000000
+    NL
+
+    ; should be infinity
+    mov rax, 0x7f800000
+    NL
+
+    ; should be -infinity
+    mov rax, 0xff800000
+    NL
+
+    ; should be NaN
+    mov rax, 0x7fc00000
+    NL
+
+
+    WRITE_BUFFER green
+    WRITE_BUFFER endWriteFloatTest
+    WRITE_BUFFER reset
+
 
 
 
