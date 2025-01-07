@@ -14,6 +14,7 @@ section .data
     space_str db " "
     hyphen_str db "-"
     tab db 9 ; 9 = ascii tab char
+    incomplete_function_str db "\033[31mThis function has not yet been implemented\033[0m", 10, 0
 
 section .text
 ; =======================================================================================================================
@@ -502,6 +503,10 @@ CloseFile:
 ; output:
 ;   prints rax to the console with at most rbx decimal values
 WriteFloat:
+    ; DELETE ME
+    WRITE_BUFFER incomplete_function_str
+    ret
+
     push rax
     push rbx
     push rcx
