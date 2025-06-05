@@ -502,32 +502,32 @@ CloseFile:
 ;   rbx - decimal places to print
 ; output:
 ;   prints rax to the console with at most rbx decimal values
-WriteFloat:
+;WriteFloat:
     ; DELETE ME
-    WRITE_BUFFER incomplete_function_str
-    ret
+    ;WRITE_BUFFER incomplete_function_str
+    ;ret
 
-    push rax
-    push rbx
-    push rcx
-    push rdx
-    push r11
+    ;push rax
+    ;push rbx
+    ;push rcx
+    ;push rdx
+    ;push r11
 
     ; zero buffer
-    push rbx ; save num of decimals to print
-    mov rbx, str55_buffer
-    ZERO_BUFFER rbx, 55
+    ;push rbx ; save num of decimals to print
+    ;mov rbx, str55_buffer
+    ;ZERO_BUFFER rbx, 55
 
     ; add sign
     ; should be 1 << 63
     ; mov rcx, 1000000000000000000000000000000000000000000000000000000000000000b
-    mov rcx, 1
-    shl rcx, 63
-    and rcx, rax
-    jz .done_with_sign
+    ;mov rcx, 1
+    ;shl rcx, 63
+    ;and rcx, rax
+    ;jz .done_with_sign
     ; is negative
-    mov byte [rbx], hyphen_str
-    mov rcx, 1
+    ;mov byte [rbx], hyphen_str
+    ;mov rcx, 1
 
     ; From here:
     ;   rax - float to print
@@ -535,26 +535,55 @@ WriteFloat:
     ;   rcx - curr length of str55_buffer
     ;   rdx - num of decimal places to print
     ;   r11 - exponent
-    .done_with_sign:
-        pop rdx ; retrieve num of decimals to print
+    ;.done_with_sign:
+    ;    pop rdx ; retrieve num of decimals to print
 
 
     ; compute exponent
     ; should be 11111111111 << 52
     ; mov r11, 0111111111110000000000000000000000000000000000000000000000000000b
-    mov r11, 11111111111
-    shl r11, 52
-    and r11, rax
-    sub r11, 1023
+    ;mov r11, 11111111111
+    ;shl r11, 52
+    ;and r11, rax
+    ;sub r11, 1023
 
     ; compute integer portion
     ; compute decimal portion
     ; add decimal portion and print
 
-    pop r11
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
-    ret
+    ;pop r11
+    ;pop rdx
+    ;pop rcx
+    ;pop rbx
+    ;pop rax
+    ;ret
 ; END OF WriteFloat ============================================================
+
+
+
+
+
+
+
+; Arbitrary length addition operation. Length is in bytes because it is the smallest unit of reservable data.
+; input:
+;   push - starting address of num1
+;   push - starting address of num2
+;   push - length of num1 (bytes)
+;   push - length of num2 (bytes)
+; output
+;   push - resulting number sum
+;        STACK: 
+;           ...
+;           ...
+;           ...
+;           largest 8 bytes
+;           second largest 8 bytes
+;           .
+;           .
+;           .
+;           smallest 8 bytes <-- TOP OF STACK
+ArbAdd:
+    ; set carry flag to 0 (so it doesn't dilute the add w/ carry)
+    ; loop through, add w/ carry in chunks of 8 bytes (starting from "smallest" byte)
+; END OF ArbAdd ================================================================
